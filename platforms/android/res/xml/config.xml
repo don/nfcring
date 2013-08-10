@@ -66,6 +66,7 @@
         <param name="android-package" value="org.apache.cordova.InAppBrowser" />
     </feature>
     <plugins>
+        <plugin name="BarcodeScanner" value="com.phonegap.plugins.barcodescanner.BarcodeScanner" />
     </plugins>
     <feature name="NfcPlugin">
         <param name="android-package" value="com.chariotsolutions.nfc.plugin.NfcPlugin" />
