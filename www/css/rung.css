@@ -233,5 +233,9 @@ input {
     width: 100% !important;
     min-height: 80px;
 }
-.step { margin-top: 20px }
+.step { 
+    margin-top: 20px;
+    display: none;
+}
 .landing { display: block }
+
