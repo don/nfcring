@@ -6,6 +6,8 @@ var actions = cordova.require('nfcring/actions');
 
 var app = {
     currentAction: {},
+    lastWriteAttempt: 0,
+    lastReadAttempt: 0,
     writeMode: false,
     initialize: function() {
         this.bind();
@@ -17,7 +19,11 @@ var app = {
         console.log('deviceready');
 
         app.addButtons();
+        console.log('buttons');
+        
         app.addActions();
+        console.log('actions');
+        
 
         nfc.addNdefListener(
             app.onNfc,
@@ -25,6 +31,7 @@ var app = {
                 console.log("Success.  Listening for rings..");
             },
             function(reason) {
+                console.log("NFC failed. " + JSON.stringify(reason));
                 var message = "There was an error starting NFC.";
 
                 if (reason === "NO_NFC") {
@@ -47,6 +54,15 @@ var app = {
     },
     readNfc: function(nfcEvent) {
         console.log("readNfc");
+
+        // WP8 only (for now)
+        // Read max once per second
+        if ((new Date() - app.lastReadAttempt) < 1000) {
+            console.log("Reading too fast. Bailing out.");
+            return;
+        }
+        
+        app.lastReadAttempt = new Date();
 
         var records = nfcEvent.tag.ndefMessage,
             record;
@@ -73,6 +89,15 @@ var app = {
         }
     },
     writeNfc: function(nfcEvent) {
+        
+        // WP8 only (for now)
+        // Write max every 1 second
+        if ((new Date() - app.lastWriteAttempt) < 1000) {
+            console.log("Writing too fast. Bailing out.");
+            return;
+        }
+        
+        app.lastWriteAttempt = new Date();
 
         // TODO handle when format is null
         var uri = app.currentAction.format(app.currentAction.optionValue);
@@ -88,7 +113,7 @@ var app = {
             function() {
                 app.writeMode = false;
                 navigator.notification.vibrate(100);
-                console.log("Written", ndefMessage);
+                console.log("Wrote " + JSON.stringify(ndefMessage));
 
                 // Toast or updating the HTML would be a better UX
                 navigator.notification.alert("Your ring is ready", function() {}, "Woohoo!");
@@ -108,7 +133,8 @@ var app = {
         $('#newActionButton').on('click', app.newAction);
         $('#scanButton').on('click', scanQR);
         $('#readRingButton').on('click', app.readRing);
-        $('#exitButton').on('click', navigator.app.exitApp);
+        // Can WP8 exit or is it not allowed like on iOS?
+        $('#exitButton').on('click', function() { navigator.notification.alert("Exit is disabled."); });
 
         // sub navigation
         $('#finishReadButton').on('click', app.home);
@@ -191,38 +217,39 @@ function isType(record, tnf, rtd) {
 // { "action": "twitter", "option": "nfcring" }
 // The user can scan it and we'll write a tag
 function scanQR() {
-    var scanner = cordova.require("cordova/plugin/BarcodeScanner");
-    scanner.scan(function(result) {
-
-        if (result.cancelled) { // user cancelled the scan
-            return;
-        }
-
-        try {
-            var qrData = result.text,
-                json = JSON.parse(qrData),
-                actionName = json.action,
-                optionValue = json.option;
-
-            if (actionName) {
-                if (actions[actionName]) {
-                    app.currentAction = actions[actionName];
-                    app.currentAction.optionValue = optionValue; // could be null
-                    app.writeMode = true;
-                    $('#landing').hide();
-                    $('#writeRing').show();
-                    app.writeMode = true;
-                } else {
-                    alert("I don't know how to process action '" + actionName + "'");
-                }
-            } else {
-                alert("No action was defined in QR Data " + qrData);
-            }
-        } catch(e) {
-            alert("Error parsing QR Data " + qrData);
-        }
-
-    }, function() {
-        alert('uh oh error - please let us know!');
-    });
+    navigator.notification.alert("QR Scanning is disabled.");
+    // var scanner = cordova.require("cordova/plugin/BarcodeScanner");
+    // scanner.scan(function(result) {
+    // 
+    //     if (result.cancelled) { // user cancelled the scan
+    //         return;
+    //     }
+    // 
+    //     try {
+    //         var qrData = result.text,
+    //             json = JSON.parse(qrData),
+    //             actionName = json.action,
+    //             optionValue = json.option;
+    // 
+    //         if (actionName) {
+    //             if (actions[actionName]) {
+    //                 app.currentAction = actions[actionName];
+    //                 app.currentAction.optionValue = optionValue; // could be null
+    //                 app.writeMode = true;
+    //                 $('#landing').hide();
+    //                 $('#writeRing').show();
+    //                 app.writeMode = true;
+    //             } else {
+    //                 alert("I don't know how to process action '" + actionName + "'");
+    //             }
+    //         } else {
+    //             alert("No action was defined in QR Data " + qrData);
+    //         }
+    //     } catch(e) {
+    //         alert("Error parsing QR Data " + qrData);
+    //     }
+    // 
+    // }, function() {
+    //     alert('uh oh error - please let us know!');
+    // });
 }
