@@ -10,4 +10,7 @@
     <feature name="Vibration">
         <param name="wp-package" value="Vibration" />
     </feature>
+    <feature name="Device">
+        <param name="wp-package" value="Device" />
+    </feature>
 </widget>

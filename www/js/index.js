@@ -14,6 +14,7 @@ var app = {
     },
     bind: function() {
         document.addEventListener('deviceready', this.deviceready, false);
+        $('#exitButton').hide();
     },
     deviceready: function() {
         console.log('deviceready');
@@ -133,8 +134,18 @@ var app = {
         $('#newActionButton').on('click', app.newAction);
         $('#scanButton').on('click', scanQR);
         $('#readRingButton').on('click', app.readRing);
-        // Can WP8 exit or is it not allowed like on iOS?
-        $('#exitButton').on('click', function() { navigator.notification.alert("Exit is disabled."); });
+        
+        if (device.platform.match(/^Win/)) {
+            $('#exitButton').remove();            
+        } else { // Android
+            $('#exitButton').show();            
+            $('#exitButton').on('click', navigator.app.exitApp);
+        }
+        
+        if ($('#exitButton')) { // not all platforms have exit button
+            // TODO - get exit impl from Android
+            $('#exitButton').on('click', function() { navigator.notification.alert("Exit is disabled."); });            
+        }
 
         // sub navigation
         $('#finishReadButton').on('click', app.home);
